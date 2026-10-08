@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Nearby Hospitals</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: linear-gradient(to right, #4A00E0, #8E2DE2);
+            color: white;
+            padding: 20px;
+        }
+        h1 {
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: #ff4081;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #e91e63;
+        }
+        #result {
+            margin-top: 20px;
+            text-align: left;
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            color: black;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+        .hospital {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        a {
+            color: #007BFF;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🏥 Find Nearby Hospitals</h1>
+<button id="getLocationButton">Find Hospitals Near Me</button>
+<div id="result"></div>
+
+<script>
+    const API_KEY = ''; // Replace with your Google Places API Key (Leave blank for OpenStreetMap)
+
+    document.getElementById('getLocationButton').addEventListener('click', function() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                position => getHospitals(position.coords.latitude, position.coords.longitude),
+                showError
+            );
+        } else {
+            document.getElementById('result').innerHTML = "❌ Geolocation is not supported by this browser.";
+        }
+    });
+
+    function getHospitals(latitude, longitude) {
+        if (API_KEY) {
+            getGoogleHospitals(latitude, longitude);
+        } else {
+            getOSMHospitals(latitude, longitude);
+        }
+    }
+
+    function getGoogleHospitals(latitude, longitude) {
+        const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=5000&type=hospital&key=${API_KEY}`;
+        
+        fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.results.length === 0) {
+                    document.getElementById('result').innerHTML = "⚠️ No hospitals found nearby.";
+                } else {
+                    displayHospitals(data.results, "google");
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching Google hospitals:", error);
+                document.getElementById('result').innerHTML = "⚠️ Error fetching Google hospital data.";
+            });
+    }
+
+    function getOSMHospitals(latitude, longitude) {
+        const url = `https://overpass-api.de/api/interpreter?data=[out:json];node(around:5000,${latitude},${longitude})[amenity=hospital];out;`;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.elements.length === 0) {
+                    document.getElementById('result').innerHTML = "⚠️ No hospitals found nearby.";
+                } else {
+                    displayHospitals(data.elements, "osm");
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching OSM hospitals:", error);
+                document.getElementById('result').innerHTML = "⚠️ Error fetching hospital data.";
+            });
+    }
+
+    function displayHospitals(hospitals, source) {
+        let output = `<h2>Nearby Hospitals 🏥</h2>`;
+        hospitals.forEach(hospital => {
+            let name = source === "google" ? hospital.name : (hospital.tags.name || "Unknown Hospital");
+            let address = source === "google" ? hospital.vicinity : `Lat: ${hospital.lat}, Lon: ${hospital.lon}`;
+            let rating = source === "google" ? (hospital.rating || "N/A") : "N/A";
+            let link = source === "google" ? 
+                `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hospital.name)}` :
+                `https://www.google.com/maps/search/?api=1&query=${hospital.lat},${hospital.lon}`;
+
+            output += `
+                <div class="hospital">
+                    <h3>${name}</h3>
+                    <p>📍 Address: ${address}</p>
+                    <p>⭐ Rating: ${rating}</p>
+                    <p>🔗 <a href="${link}" target="_blank">View on Maps</a></p>
+                </div>
+            `;
+        });
+        document.getElementById('result').innerHTML = output;
+    }
+
+    function showError(error) {
+        let message = "An error occurred.";
+        switch(error.code) {
+            case error.PERMISSION_DENIED:
+                message = "❌ User denied the request for Geolocation.";
+                break;
+            case error.POSITION_UNAVAILABLE:
+                message = "⚠️ Location information is unavailable.";
+                break;
+            case error.TIMEOUT:
+                message = "⏳ The request to get user location timed out.";
+                break;
+        }
+        document.getElementById('result').innerHTML = message;
+    }
+</script>
+
+</body>
+</html>

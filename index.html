@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartAidNetwork</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f1f8ff, #e3f2fd);
+            color: #333;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(90deg, #007bff, #ff4081);
+            padding: 15px 30px;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .navbar .logo {
+            display: flex;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .navbar img {
+            width: 60px;
+            margin-right: 10px;
+            border-radius: 50%;
+        }
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+        .nav-links button {
+            background: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .nav-links button:hover {
+            background: #ffeb3b;
+            color: black;
+            transform: scale(1.05);
+        }
+        .banner {
+            width: 100%;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(90deg, rgba(0,123,255,0.8), rgba(255,64,129,0.8)), url('background-image.jpg') center/cover;
+            color: white;
+            font-size: 38px;
+            font-weight: bold;
+            text-align: center;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+            padding: 10px;
+            border-bottom: 5px solid #007bff;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+        .feature {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 2px solid #007bff;
+        }
+        .feature:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        .feature img {
+            width: 100%;
+            border-radius: 15px;
+            margin-bottom: 10px;
+        }
+        .my_button {
+            width: 100%;
+            background: linear-gradient(45deg, #ff4081, #007bff);
+            color: white;
+            padding: 12px;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            margin-top: 10px;
+            border-radius: 10px;
+            transition: 0.3s;
+        }
+        .my_button:hover {
+            background: linear-gradient(45deg, #007bff, #ff4081);
+            transform: scale(1.05);
+        }
+        @media (max-width: 600px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">
+            <img src="logo.jpeg" alt="SmartAidNetwork Logo">
+            SmartAidNetwork
+        </div>
+        <div class="nav-links">
+            <button onclick="location.href='#'">Home</button>
+            <button onclick="location.href='example5.html'">Hospitals</button>
+        </div>
+    </div>
+    
+    <div class="banner">🚨 Intelligent Ambulance & Emergency Response System 🚑</div>
+    
+    <div class="container">
+        <div class="feature">
+            <img src="ai.jpeg" alt="AI Traffic Management">
+            <button class="my_button" onclick="location.href='example.html'">AI-Powered Traffic Management</button>
+            <p>Optimizes ambulance routes using real-time traffic data.</p>
+        </div>
+        
+        <div class="feature">
+            <img src="comm.jpeg" alt="Real-Time Communication">
+            <button class="my_button" onclick="location.href='example2.html'">Real-Time Communication</button>
+            <p>Seamless communication between ambulance staff and hospitals for faster response.</p>
+        </div>
+        
+        <div class="feature">
+            <img src="drone.jpeg" alt="Drone-Assisted First Aid">
+            <button class="my_button" onclick="location.href='example3.html'">Drone-Assisted First Aid</button>
+            <p>Drones deliver critical medical supplies before the ambulance arrives.</p>
+        </div>
+        
+        <div class="feature">
+            <img src="host.jpeg" alt="Hospital Resource Allocation">
+            <button class="my_button" onclick="location.href='example4.html'">Automated Hospital Resource Allocation</button>
+            <p>AI allocates hospital resources based on patient case severity.</p>
+        </div>
+        <div class="feature">
+    <img src="firstaid.png" alt="AI First-Aid Voice Assistant">
+    <button class="my_button" onclick="location.href='example6.html'">
+        AI First-Aid Voice Assistant
+    </button>
+    <p>
+        Provides multilingual, professional voice-guided first aid instructions
+        in English, Hindi, and Telugu before the ambulance arrives.
+    </p>
+</div>
+ <div class="feature">
+    <img src="medical_report.png" alt="AI Medical Report Explainer">
+    <button class="my_button" onclick="location.href='example7.html'">
+        AI Medical Report Explainer
+    </button>
+    <p>
+        Upload lab reports, prescriptions, or discharge summaries and receive
+        AI-powered explanations in simple language, including risk level
+        assessment and recommended next steps for patients.
+    </p>
+</div>
+    </div>
+  
+
+</body>
+</html>

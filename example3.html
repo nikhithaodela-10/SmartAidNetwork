@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Drone Medical Delivery</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/@turf/turf/turf.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: linear-gradient(to right, #1e3c72, #2a5298);
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            font-size: 2em;
+            padding: 20px;
+        }
+        #map {
+            height: 600px;
+            width: 90%;
+            margin: 20px auto;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        .controls {
+            margin: 15px;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 18px;
+            cursor: pointer;
+            background: #ff416c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #ff4b2b;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🚁 Emergency Drone Medical Delivery</h1>
+    <div class="controls">
+        <button onclick="findNearestDrone()">Request Emergency Medical Supply</button>
+    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([20.5937, 78.9629], 5);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        var userMarker = L.marker([0, 0], { draggable: false }).addTo(map)
+            .bindPopup("Your Location").openPopup();
+
+        var droneMarkers = [], droneData = [];
+        var droneIcon = L.icon({ iconUrl: "https://cdn-icons-png.flaticon.com/512/1797/1797972.png", iconSize: [30, 30] });
+
+        function generateDrones(count) {
+            for (let i = 0; i < count; i++) {
+                let lat = 8 + Math.random() * 20;
+                let lon = 68 + Math.random() * 28;
+                let droneId = "Drone " + (i + 1);
+                let supplies = ["First-aid Kit", "Defibrillator", "Oxygen Cylinder"][Math.floor(Math.random() * 3)];
+
+                let marker = L.marker([lat, lon], { icon: droneIcon }).addTo(map)
+                    .bindPopup(`<b>🚁 ${droneId}</b><br>Supplies: ${supplies}`);
+                
+                droneMarkers.push(marker);
+                droneData.push({ lat, lon, droneId, supplies });
+            }
+        }
+
+        generateDrones(5000);
+
+        function getUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    let userLat = position.coords.latitude;
+                    let userLon = position.coords.longitude;
+                    userMarker.setLatLng([userLat, userLon]).bindPopup("Your Location").openPopup();
+                    map.setView([userLat, userLon], 10);
+                }, () => alert("Unable to get location. Allow location access."));
+            } else {
+                alert("Geolocation not supported.");
+            }
+        }
+
+        function findNearestDrone() {
+            let userLatLng = userMarker.getLatLng();
+            let userPoint = turf.point([userLatLng.lng, userLatLng.lat]);
+            let nearestDrone = null;
+            let minDistance = Infinity;
+
+            droneData.forEach(drone => {
+                let dronePoint = turf.point([drone.lon, drone.lat]);
+                let distance = turf.distance(userPoint, dronePoint, { units: 'kilometers' });
+
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestDrone = drone;
+                }
+            });
+
+            if (nearestDrone) {
+                let droneLatLng = [nearestDrone.lat, nearestDrone.lon];
+                
+                // Calculate estimated arrival time (assuming drone speed = 60 km/h => 1 km/min)
+                let estimatedTime = Math.ceil(minDistance / 1) + " min";
+
+                if (window.droneRoute) map.removeLayer(window.droneRoute);
+                window.droneRoute = L.polyline([userLatLng, droneLatLng], { color: 'blue', weight: 3 }).addTo(map);
+
+                // Update drone popup to show ETA
+                let droneMarker = droneMarkers.find(marker => {
+                    return marker.getLatLng().lat === nearestDrone.lat && marker.getLatLng().lng === nearestDrone.lon;
+                });
+
+                if (droneMarker) {
+                    droneMarker.bindPopup(`<b>🚁 ${nearestDrone.droneId}</b><br>
+                                          Supplies: ${nearestDrone.supplies}<br>
+                                          <b>Drone is arriving in ${estimatedTime} with the ${nearestDrone.supplies}</b>`).openPopup();
+                }
+
+                alert(`🚁 Nearest drone dispatched!\n
+                    Drone ID: ${nearestDrone.droneId}\n
+                    Supplies: ${nearestDrone.supplies}\n
+                    Estimated Arrival: ${estimatedTime}\n
+                    Distance: ${minDistance.toFixed(2)} km`);
+            }
+        }
+
+        getUserLocation();
+    </script>
+
+</body>
+</html>

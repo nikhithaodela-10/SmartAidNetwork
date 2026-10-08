@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Ambulance Locator</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/@turf/turf/turf.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: linear-gradient(to right, #4A00E0, #8E2DE2);
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            font-size: 2em;
+            padding: 20px;
+        }
+        #map {
+            height: 600px;
+            width: 90%;
+            margin: 20px auto;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        .controls {
+            margin: 15px;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 18px;
+            cursor: pointer;
+            background: #ff416c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #ff4b2b;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🚑 Smart Ambulance Locator</h1>
+    <div class="controls">
+        <button onclick="findNearestAmbulance()">Find Nearest Ambulance</button>
+    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([20.5937, 78.9629], 5);  
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        var userMarker = L.marker([0, 0], { draggable: false }).addTo(map)
+            .bindPopup("Your Location").openPopup();
+
+        var ambulanceMarkers = [];
+        var ambulanceData = [];
+        var ambulanceFeatures = [];
+
+        var ambulanceIcon = L.icon({
+            iconUrl: "https://cdn-icons-png.flaticon.com/512/2966/2966485.png",
+            iconSize: [30, 30]
+        });
+
+        function generateRandomAmbulances(count) {
+            for (let i = 0; i < count; i++) {
+                let lat = 8 + Math.random() * 20; 
+                let lon = 68 + Math.random() * 28; 
+                let driverName = "Driver " + (i + 1);
+                let contactNumber = "+91 " + (9000000000 + Math.floor(Math.random() * 99999999));
+                let estimatedTime = (5 + Math.floor(Math.random() * 20)) + " min";
+
+                let marker = L.marker([lat, lon], { icon: ambulanceIcon }).addTo(map)
+                    .bindPopup(`<b>🚑 Ambulance ${i + 1}</b><br>
+                                Driver: ${driverName} <br>
+                                Contact: ${contactNumber} <br>
+                                ETA: ${estimatedTime}`);
+                
+                ambulanceMarkers.push(marker);
+                let ambulanceObj = { lat, lon, driverName, contactNumber, estimatedTime };
+                ambulanceData.push(ambulanceObj);
+
+                // Store as GeoJSON feature for fast lookup
+                ambulanceFeatures.push(turf.point([lon, lat], ambulanceObj));
+            }
+
+            console.log("🚑 5,000 ambulances placed & indexed!");
+        }
+
+        generateRandomAmbulances(5000); 
+
+        function getUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    let userLat = position.coords.latitude;
+                    let userLon = position.coords.longitude;
+                    userMarker.setLatLng([userLat, userLon]).bindPopup("Your Location").openPopup();
+                    map.setView([userLat, userLon], 10);
+                }, () => alert("Unable to get location. Allow location access."));
+            } else {
+                alert("Geolocation not supported.");
+            }
+        }
+
+        function findNearestAmbulance() {
+            let userLatLng = userMarker.getLatLng();
+            let userPoint = turf.point([userLatLng.lng, userLatLng.lat]);
+
+            // Convert ambulance data into a Turf.js feature collection
+            let ambulanceCollection = turf.featureCollection(ambulanceFeatures);
+
+            // Find the nearest ambulance
+            let nearestAmbulanceFeature = turf.nearestPoint(userPoint, ambulanceCollection);
+
+            if (nearestAmbulanceFeature) {
+                let nearestAmbulance = nearestAmbulanceFeature.properties;
+                let ambLatLng = [nearestAmbulance.lat, nearestAmbulance.lon];
+
+                if (window.routeLine) {
+                    map.removeLayer(window.routeLine);
+                }
+
+                window.routeLine = L.polyline([userLatLng, ambLatLng], { color: 'red', weight: 3 }).addTo(map);
+                
+                alert(`🚑 Nearest ambulance found:\n
+                    Driver: ${nearestAmbulance.driverName}\n
+                    Contact: ${nearestAmbulance.contactNumber}\n
+                    Estimated Arrival: ${nearestAmbulance.estimatedTime}`);
+            }
+        }
+
+        getUserLocation();
+    </script>
+
+</body>
+</html>

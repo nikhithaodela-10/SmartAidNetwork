@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartAid Network</title>
+    <style>
+        /* 🌈 General Page Styling */
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #EAF3FF; /* Soft light blue */
+            color: #333;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        /* 🌟 Gradient Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 50px;
+            background: linear-gradient(90deg, #3D7EF3, #E044A8);
+            color: white;
+            font-size: 18px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .navbar h1 {
+            margin: 0;
+            font-weight: bold;
+        }
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            transition: opacity 0.3s;
+        }
+        .nav-links a:hover {
+            opacity: 0.7;
+        }
+
+        /* 💠 Cards Styling */
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        .card {
+            background: linear-gradient(135deg, #a2d2ff, #ffafcc); /* Bluish Pink Gradient */
+            padding: 20px;
+            margin: 15px;
+            border-radius: 12px;
+            box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.2);
+            width: 300px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 3px solid #3D7EF3;
+        }
+        .card:hover {
+            transform: scale(1.05);
+            box-shadow: 0px 8px 20px rgba(61, 126, 243, 0.5);
+        }
+
+        /* 🎨 Input, Select & Buttons */
+        textarea, select, button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 2px solid #3D7EF3;
+            background: rgba(255, 255, 255, 0.8);
+        }
+        button {
+            background: #E044A8;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s, transform 0.2s;
+        }
+        button:hover {
+            background: #C63693;
+            transform: scale(1.05);
+        }
+
+        /* 📍 Live Location */
+        .ambulance-location {
+            background: #FFCC00;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 style="color: #3D7EF3; text-shadow: 2px 2px 5px rgba(0,0,0,0.2);">
+        Advanced Emergency Response System
+    </h1>
+
+    <div class="container">
+        <!-- 🚑 Ambulance Unit -->
+        <div class="card">
+            <h2>🚑 Ambulance Unit</h2>
+            <label>Patient Data:</label>
+            <textarea id="ambulanceData" rows="3">Patient: John Doe, Condition: Critical, HR-110, BP-90/60</textarea>
+            
+            <label>Injury Type:</label>
+            <select id="injuryType">
+                <option value="Head Trauma">Head Trauma</option>
+                <option value="Fracture">Fracture</option>
+                <option value="Burns">Burns</option>
+                <option value="Cardiac Arrest">Cardiac Arrest</option>
+                <option value="Spinal Cord Injury">Spinal Cord Injury</option>
+                <option value="Severe Bleeding">Severe Bleeding</option>
+                <option value="Stroke">Stroke</option>
+                <option value="Respiratory Distress">Respiratory Distress</option>
+                <option value="Gunshot Wound">Gunshot Wound</option>
+                <option value="Seizures">Seizures</option>
+                <option value="Allergic Reaction">Allergic Reaction</option>
+                <option value="Electrocution">Electrocution</option>
+                <option value="Drowning">Drowning</option>
+                <option value="Multiple Fractures">Multiple Fractures</option>
+                <option value="Internal Organ Damage">Internal Organ Damage</option>
+            </select>
+            
+            <button onclick="sendData()">📡 Send Data to Hospital</button>
+            <button onclick="alertTrafficPolice()">🚦 Alert Traffic Police</button>
+        </div>
+
+        <!-- 🏥 Hospital Control Room -->
+        <div class="card">
+            <h2>🏥 Hospital Control Room</h2>
+            <label>Incoming Updates:</label>
+            <textarea id="hospitalUpdates" rows="3" readonly></textarea>
+        </div>
+
+        <!-- 📍 Nearest Hospital Details -->
+        <div class="card">
+            <h2>📍 Nearest Hospital</h2>
+            <p><strong>🏥 Name:</strong> <span id="hospitalName">Fetching...</span></p>
+            <p><strong>🩺 Specialization:</strong> <span id="hospitalSpecialization">Fetching...</span></p>
+            <p><strong>📞 Contact:</strong> <span id="hospitalContact">Fetching...</span></p>
+            <p><strong>🛏️ Available Beds:</strong> <span id="availableBeds">Fetching...</span></p>
+            <p><strong>⚕️ Prepared for:</strong> <span id="treatmentPrepared">Fetching...</span></p>
+        </div>
+
+        <!-- 🚦 Traffic Police Notification -->
+        <div class="card">
+            <h2>🚦 Traffic Police Status</h2>
+            <p><strong>Status:</strong> <span id="trafficStatus">Not Notified</span></p>
+        </div>
+
+    <script>
+        function sendData() {
+            let data = document.getElementById('ambulanceData').value;
+            let injury = document.getElementById('injuryType').value;
+            document.getElementById('hospitalUpdates').value = "📡 Incoming Data:\n" + data + "\n🩺 Injury Type: " + injury;
+            fetchHospitalDetails(injury);
+        }
+
+        function fetchHospitalDetails(injury) {
+            setTimeout(() => {
+                document.getElementById('hospitalName').textContent = "City General Hospital";
+                document.getElementById('hospitalSpecialization').textContent = "Emergency & Trauma Care";
+                document.getElementById('hospitalContact').textContent = "+91 9876543210";
+                document.getElementById('availableBeds').textContent = "7";
+                document.getElementById('treatmentPrepared').textContent = injury;
+            }, 2000);
+        }
+
+        function alertTrafficPolice() {
+            setTimeout(() => {
+                document.getElementById('trafficStatus').textContent = "🚦 Traffic Cleared";
+                alert("🚨 Traffic police have been alerted to clear the route for the ambulance.");
+            }, 1000);
+        }
+    </script>
+
+</body>
+</html>

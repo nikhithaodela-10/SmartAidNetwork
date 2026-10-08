@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI First-Aid Voice Assistant | SmartAidNetwork</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+body {
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  background: linear-gradient(135deg, #f1f8ff, #e3f2fd);
+}
+.navbar {
+  background: linear-gradient(90deg, #007bff, #ff4081);
+  padding: 16px 30px;
+  color: white;
+  font-size: 24px;
+  font-weight: 600;
+}
+.banner {
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, rgba(0,123,255,0.85), rgba(255,64,129,0.85));
+  color: white;
+  font-size: 34px;
+}
+.container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 20px;
+}
+.card {
+  background: white;
+  border-radius: 14px;
+  padding: 30px;
+  text-align: center;
+  border: 2px solid #007bff;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+select, textarea {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+textarea {
+  height: 120px;
+  background: #f9f9f9;
+  resize: none;
+}
+button {
+  width: 100%;
+  background: linear-gradient(45deg, #ff4081, #007bff);
+  color: white;
+  padding: 14px;
+  font-size: 18px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+#status {
+  margin-top: 12px;
+  font-size: 14px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="navbar">SmartAidNetwork</div>
+<div class="banner">🩺 AI First-Aid Voice Assistant</div>
+
+<div class="container">
+  <div class="card">
+    <p>Describe the emergency. AI will analyze and guide you.</p>
+
+    <select id="language">
+      <option value="auto">Auto Detect</option>
+      <option value="en">English</option>
+      <option value="hi">Hindi</option>
+      <option value="te">Telugu</option>
+    </select>
+
+    <textarea id="liveText" placeholder="🎙️ Speak the emergency..." readonly></textarea>
+
+    <button onclick="startAssistant()">🎙️ Start Assistant</button>
+
+    <div id="status"></div>
+  </div>
+</div>
+
+<script>
+let recognition;
+let voices = [];
+let isListening = false;
+
+speechSynthesis.onvoiceschanged = () => voices = speechSynthesis.getVoices();
+
+function detectLanguage() {
+  const sel = language.value;
+  if (sel !== "auto") return sel;
+  const nav = navigator.language || "en";
+  if (nav.startsWith("hi")) return "hi";
+  if (nav.startsWith("te")) return "te";
+  return "en";
+}
+
+function getVoice(lang) {
+  return voices.find(v => v.lang.startsWith(lang)) || voices[0];
+}
+
+function speak(text, lang) {
+  const msg = new SpeechSynthesisUtterance(text);
+  msg.voice = getVoice(lang);
+  msg.rate = 0.9;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(msg);
+}
+
+function normalize(text) {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s]/g, "")
+    .trim();
+}
+
+function startAssistant() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition || isListening) return;
+
+  recognition = new SpeechRecognition();
+  const lang = detectLanguage();
+
+  recognition.lang = lang === "hi" ? "hi-IN" : lang === "te" ? "te-IN" : "en-US";
+  recognition.interimResults = true;
+  recognition.continuous = false;
+
+  liveText.value = "";
+  status.innerText = "🎧 Listening...";
+  isListening = true;
+
+  recognition.start();
+
+  recognition.onresult = e => {
+    let t = "";
+    for (let i = 0; i < e.results.length; i++) {
+      t += e.results[i][0].transcript;
+    }
+    liveText.value = t;
+  };
+
+  recognition.onend = () => {
+    isListening = false;
+    const text = normalize(liveText.value);
+    status.innerText = "🧠 Analyzing emergency...";
+    analyze(text, lang);
+  };
+}
+
+async function analyze(text, lang) {
+  try {
+    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer YOUR_OPENAI_API_KEY"
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: "You are a medical first aid assistant. Respond with correct emergency guidance." },
+          { role: "user", content: text }
+        ],
+        temperature: 0.2
+      })
+    });
+
+    if (!r.ok) throw new Error("AI failed");
+
+    const d = await r.json();
+    const aiText = d.choices[0].message.content;
+    liveText.value = aiText;
+    speak(aiText, lang);
+    status.innerText = "🔊 AI response delivered";
+
+  } catch {
+    fallback(text, lang);
+  }
+}
+
+function fallback(text, lang) {
+  let msg = "";
+
+  if (text.includes("bleed") || text.includes("blood") || text.includes("cut")) {
+    msg = "Apply firm pressure using a clean cloth and keep the wound elevated.";
+  } else if (
+    text.includes("not breathing") ||
+    text.includes("unconscious") ||
+    text.includes("no pulse")
+  ) {
+    msg = "Check responsiveness and begin CPR immediately. Call emergency services.";
+  } else {
+    msg = "Stay calm, ensure safety, and call emergency services immediately.";
+  }
+
+  speak(msg, lang);
+  liveText.value = msg;
+  status.innerText = "⚠️ Fallback guidance used";
+}
+</script>
+
+</body>
+</html>

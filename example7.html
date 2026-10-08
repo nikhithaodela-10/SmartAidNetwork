@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Medical Report Explainer | SmartAidNetwork</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #f1f8ff, #e3f2fd);
+}
+
+.header {
+    background: linear-gradient(90deg, #5b86e5, #e55d87);
+    padding: 40px;
+    color: white;
+    text-align: center;
+    font-size: 32px;
+    font-weight: 600;
+}
+
+.card {
+    max-width: 900px;
+    margin: 40px auto;
+    background: white;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    border: 3px solid #4a78ff;
+}
+
+label {
+    font-weight: 600;
+}
+
+input[type=file] {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+}
+
+textarea {
+    width: 100%;
+    height: 180px;
+    margin-top: 15px;
+    padding: 15px;
+    font-size: 14px;
+    border-radius: 10px;
+    border: 2px solid #ddd;
+    resize: none;
+}
+
+button {
+    width: 100%;
+    margin-top: 20px;
+    padding: 15px;
+    border: none;
+    font-size: 18px;
+    color: white;
+    border-radius: 12px;
+    cursor: pointer;
+    background: linear-gradient(90deg, #e55d87, #5b86e5);
+}
+
+button:hover {
+    transform: scale(1.03);
+}
+
+.result {
+    margin-top: 25px;
+    padding: 20px;
+    border-left: 6px solid #4a78ff;
+    background: #f7fbff;
+    border-radius: 10px;
+    display: none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">🩺 AI Medical Report Explainer</div>
+
+<div class="card">
+
+<label>Upload patient medical report (PDF)</label>
+<input type="file" id="pdfUpload" accept="application/pdf">
+
+<textarea id="extractedText" placeholder="Extracted medical content will be analyzed automatically..." readonly></textarea>
+
+<button onclick="analyzeReport()">Analyze & Explain</button>
+
+<div class="result" id="result"></div>
+
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+
+document.getElementById("pdfUpload").addEventListener("change", readPDF);
+
+async function readPDF(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+        const pdf = await pdfjsLib.getDocument(new Uint8Array(reader.result)).promise;
+        let text = "";
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            content.items.forEach(item => text += item.str + " ");
+        }
+
+        // Clean unreadable symbols
+        text = text
+            .replace(/[^a-zA-Z0-9.%<>\/\- ]/g, " ")
+            .replace(/\s+/g, " ")
+            .toLowerCase();
+
+        document.getElementById("extractedText").value = text;
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function analyzeReport() {
+    const text = document.getElementById("extractedText").value;
+    const result = document.getElementById("result");
+
+    let explanation = [];
+    let precautions = [];
+    let risk = "Low";
+
+    // CARDIAC
+    if (text.includes("troponin")) {
+        explanation.push("Markers related to heart muscle stress were found.");
+        precautions.push("Avoid heavy physical activity");
+        precautions.push("Consult a cardiologist immediately");
+        risk = "High";
+    }
+
+    if (text.includes("hscrp") || text.includes("c reactive")) {
+        explanation.push("Inflammation marker detected, associated with heart disease risk.");
+        precautions.push("Adopt heart-healthy diet");
+        precautions.push("Avoid smoking and alcohol");
+        risk = risk === "High" ? "High" : "Moderate";
+    }
+
+    // LIPIDS
+    if (text.includes("cholesterol") || text.includes("lipid")) {
+        explanation.push("Cholesterol-related parameters were identified.");
+        precautions.push("Reduce fried and oily foods");
+        precautions.push("Increase fiber intake");
+        risk = risk === "High" ? "High" : "Moderate";
+    }
+
+    // DIABETES
+    if (text.includes("hba1c") || text.includes("glucose")) {
+        explanation.push("Blood sugar indicators were found in the report.");
+        precautions.push("Limit sugar and refined carbohydrates");
+        precautions.push("Maintain regular physical activity");
+        risk = risk === "High" ? "High" : "Moderate";
+    }
+
+    if (explanation.length === 0) {
+        explanation.push("No critical abnormalities were identified from the available medical indicators.");
+        precautions.push("Maintain a healthy lifestyle");
+        precautions.push("Continue routine health checkups");
+    }
+
+    result.innerHTML = `
+        <b>Explanation:</b><br>
+        ${explanation.map(e => "• " + e).join("<br>")}
+        <br><br>
+
+        <b>Risk Level:</b> ${risk}
+        <br><br>
+
+        <b>Precautions:</b><br>
+        ${precautions.map(p => "• " + p).join("<br>")}
+        <br><br>
+
+        <b>Next Steps:</b><br>
+        • Follow doctor’s advice<br>
+        • Repeat tests if recommended<br>
+        • Do not self-medicate
+    `;
+
+    result.style.display = "block";
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Specialized Hospitals</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(to right, #4e54c8, #8f94fb);
+            text-align: center;
+            color: white;
+        }
+        h1 {
+            font-size: 28px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        p {
+            font-size: 18px;
+        }
+        input {
+            padding: 12px;
+            font-size: 16px;
+            margin: 10px;
+            width: 80%;
+            max-width: 400px;
+            border: 2px solid #ffffff;
+            border-radius: 5px;
+            text-align: center;
+            background: white;
+            color: #333;
+        }
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background: linear-gradient(to right, #ff416c, #ff4b2b);
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s ease-in-out;
+        }
+        button:hover {
+            background: linear-gradient(to right, #ff4b2b, #ff416c);
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            color: #333;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            display: inline-block;
+            width: 80%;
+            max-width: 500px;
+        }
+        a {
+            color: #1976d2;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🚑 Find Nearby Specialized Hospitals</h1>
+<p>Enter the affected body part or disease to get the nearest hospitals.</p>
+
+<input type="text" id="userInput" placeholder="Enter affected part (e.g., Head, Heart)">
+<button id="getLocationButton">Find Hospitals</button>
+
+<div id="result"></div>
+
+<script>
+    document.getElementById('getLocationButton').addEventListener('click', function() {
+        const userCondition = document.getElementById('userInput').value.trim();
+        
+        if (!userCondition) {
+            document.getElementById('result').innerHTML = "⚠️ Please enter an affected body part or disease.";
+            return;
+        }
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                position => findHospitals(position.coords.latitude, position.coords.longitude, userCondition),
+                showError
+            );
+        } else {
+            document.getElementById('result').innerHTML = "❌ Geolocation is not supported by this browser.";
+        }
+    });
+
+    function findHospitals(latitude, longitude, condition) {
+        const query = encodeURIComponent(condition + " hospital near me");
+        const mapsUrl = `https://www.google.com/maps/search/${query}/@${latitude},${longitude},14z`;
+
+        document.getElementById('result').innerHTML = `
+            <p>📍 Finding hospitals for: <strong>${condition}</strong></p>
+            <p>🌍 Your Location: <strong>Lat:</strong> ${latitude}, <strong>Lng:</strong> ${longitude}</p>
+            <p>🔍 <a href="${mapsUrl}" target="_blank">Click here to view hospitals on Google Maps</a></p>
+        `;
+    }
+
+    function showError(error) {
+        switch(error.code) {
+            case error.PERMISSION_DENIED:
+                document.getElementById('result').innerHTML = "❌ User denied the request for Geolocation.";
+                break;
+            case error.POSITION_UNAVAILABLE:
+                document.getElementById('result').innerHTML = "⚠️ Location information is unavailable.";
+                break;
+            case error.TIMEOUT:
+                document.getElementById('result').innerHTML = "⏳ The request to get user location timed out.";
+                break;
+            case error.UNKNOWN_ERROR:
+                document.getElementById('result').innerHTML = "⚠️ An unknown error occurred.";
+                break;
+        }
+    }
+</script>
+
+</body>
+</html>
